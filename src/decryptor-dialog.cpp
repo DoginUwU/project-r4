@@ -65,7 +65,7 @@ void DecyptorDialog::create_dialog_file(const Path& path, const std::string file
             interpretedText += Consts::dialogMap.at(value);
         } else
         {
-            interpretedText += '?';
+            interpretedText += 'ඞ';
         }
     }
 

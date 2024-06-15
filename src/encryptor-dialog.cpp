@@ -54,24 +54,33 @@ void EncryptorDialog::create_bin_file(const Path& path, const std::string file_p
     output_path_name = output_path_name + ".bin";
     std::ofstream outputFile(path.location + path.encrypted_dialogs_output_location + "/" + output_path_name, std::ios::binary);
 
+    // need to open the binary file and place in the correct position
+    std::ifstream originalBinFile(path.location + path.bin_output_location  + "/" + output_path_name, std::ios::binary);
+
+    if(!originalBinFile.is_open())
+    {
+        std::cerr << "[DIALOG] Failed to open file" << std::endl;
+    }
+
+    std::vector<uint16_t> originalData(std::istreambuf_iterator<char>(originalBinFile), {});
+
+    size_t index = 0;
     for (char c: textContent)
     {
+        index++;
         std::string str(1, c);
-        if (reversedDialogMap.find(str) != reversedDialogMap.end())
+        if (reversedDialogMap.contains(str))
         {
             uint16_t encodedValue = reversedDialogMap.at(str);
+
+            // convert big endian to little endian
+            encodedValue = ((encodedValue & 0xFF) << 8) | ((encodedValue & 0xFF00) >> 8);
+
             outputFile.write(reinterpret_cast<const char*>(&encodedValue), sizeof(encodedValue));
         } else
         {
-            if(c == '?')
-            {
-                // need to open the binary file and place in the correct position
-                // std::ifstream binFile(path.location + path.bin_output_location + output_path_name, std::ios::binary);
-                // std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(binFile), {});
-                // binFile.close();
-            }
-
-            // std::cerr << str << " not found in dialog map" << std::endl;
+            uint16_t encodedValue = originalData[index];
+            outputFile.write(reinterpret_cast<const char*>(&encodedValue), sizeof(encodedValue));
         }
     }
 
