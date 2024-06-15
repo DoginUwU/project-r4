@@ -67,7 +67,7 @@ void EncryptorDialog::create_bin_file(const Path& path, const std::string file_p
     size_t index = 0;
     for (char c: textContent)
     {
-        index++;
+        index += 2;
         std::string str(1, c);
         if (reversedDialogMap.contains(str))
         {
@@ -79,8 +79,16 @@ void EncryptorDialog::create_bin_file(const Path& path, const std::string file_p
             outputFile.write(reinterpret_cast<const char*>(&encodedValue), sizeof(encodedValue));
         } else
         {
-            uint16_t encodedValue = originalData[index];
-            outputFile.write(reinterpret_cast<const char*>(&encodedValue), sizeof(encodedValue));
+            if (index <= originalData.size())
+            {
+                uint16_t littleValue = originalData[index - 2] << 8 | originalData[index - 1];
+                uint16_t value = ((littleValue & 0xFF) << 8) | ((littleValue & 0xFF00) >> 8);
+
+                outputFile.write(reinterpret_cast<const char*>(&value), sizeof(value));
+            } else
+            {
+                std::cerr << "[DIALOG] Failed to find character in map" << std::endl;
+            }
         }
     }
 
